@@ -1,5 +1,6 @@
 package com.kooritea.fcmfix.xposed;
 
+import android.app.AndroidAppHelper;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +25,7 @@ public abstract class XposedModule {
     protected static Context context = null;
     private static ArrayList<XposedModule> instances = new ArrayList();
     private static Boolean isInitUpdateConfigReceiver = false;
+    public boolean isRegisterUnlockBroadcastReceive = false;
 
     protected XposedModule(final XC_LoadPackage.LoadPackageParam loadPackageParam) {
         this.loadPackageParam = loadPackageParam;
@@ -148,4 +150,25 @@ public abstract class XposedModule {
         }
 
     }
+    public void checkUserDeviceUnlock(Context context) {
+        if (this.isRegisterUnlockBroadcastReceive) {
+            return;
+        }
+        if (((UserManager) context.getSystemService(UserManager.class)).isUserUnlocked()) {
+            try {
+                onCanReadConfig();
+            } catch (Exception e) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("读取配置文件初始化失败: ");
+                sb.append(e.getMessage());
+                printLog( sb.toString());
+            }
+        } else {
+            this.isRegisterUnlockBroadcastReceive = true;
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction("android.intent.action.USER_UNLOCKED");
+            AndroidAppHelper.currentApplication().getApplicationContext().registerReceiver(this.unlockBroadcastReceive, intentFilter);
+        }
+    }
+
 }
