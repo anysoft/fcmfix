@@ -12,6 +12,7 @@ import com.kooritea.fcmfix.util.XposedUtils;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
+import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
@@ -52,14 +53,17 @@ public class PowerKeeperFix extends XposedModule {
     }
 
     protected void startHook() {
+        XposedBridge.log("[fcmfix] start to hook powerkeeper!");
         hookMilletPolicy();
         hookGmsObserver();
         hookGmsCoreUtils();
         hookExtremePowerController();
         hookNetdExecutor();
+        XposedBridge.log("[fcmfix] hook powerkeeper finished!");
     }
 
     protected void hookGmsObserver() {
+        XposedBridge.log("[fcmfix] start to hook hookGmsObserver!");
         /**
          * com.miui.powerkeeper.utils.GmsObserver
          */
@@ -103,6 +107,7 @@ public class PowerKeeperFix extends XposedModule {
     }
 
     protected void hookGmsCoreUtils() {
+        XposedBridge.log("[fcmfix] start to hook hookGmsCoreUtils!");
         /**
          * com.miui.powerkeeper.utils.GmsCoreUtils;
          */
@@ -128,6 +133,7 @@ public class PowerKeeperFix extends XposedModule {
     }
 
     protected void hookMilletPolicy() {
+        XposedBridge.log("[fcmfix] start to hook hookMilletPolicy!");
         /**
          * com.miui.powerkeeper.millet.MilletPolicy
          */
@@ -160,6 +166,9 @@ public class PowerKeeperFix extends XposedModule {
         //白名单
         List<String> mDataWhiteList = new ArrayList(
                 Arrays.asList(
+                        teams,
+                        telegram,
+                        telegramX,
                         "com.google.android.gms",
                         "com.google.android.ext.services",
                         "com.xiaomi.mibrain.speech",
@@ -183,6 +192,9 @@ public class PowerKeeperFix extends XposedModule {
                 ));
         List<String> whiteApps = new ArrayList(
                 Arrays.asList(
+                        teams,
+                        telegram,
+                        telegramX,
                         "com.google.android.gms",
                         "com.google.android.ext.services",
                         "com.miui.hybrid",
@@ -223,9 +235,13 @@ public class PowerKeeperFix extends XposedModule {
                     mSystemBlackList.remove(gms);
 //                    whiteApps.remove(gms);
 //                    whiteApps.remove(extService);
+                    whiteApps.add(teams);
+                    whiteApps.add(telegramX);
 
                     mDataWhiteList.remove(qq);
 //                    mDataWhiteList.remove(wechat);
+                    mDataWhiteList.add(teams);
+                    mDataWhiteList.add(telegramX);
 
                     // 实例变量
                     List<String> pkgWhiteList = (List<String>) XposedHelpers.getObjectField(milletPolicy, "pkgWhiteList");
@@ -237,9 +253,9 @@ public class PowerKeeperFix extends XposedModule {
                     //add into pkgWhiteList
                     pkgWhiteList.add(gms);
                     pkgWhiteList.add(extService);
-//                    pkgWhiteList.add(teams);
-//                    pkgWhiteList.add(telegram);
-//                    pkgWhiteList.add(telegramX);
+                    pkgWhiteList.add(teams);
+                    pkgWhiteList.add(telegram);
+                    pkgWhiteList.add(telegramX);
 
                     //add into mUseDataWhiteList
                     mUseDataWhiteList.add(gms);
@@ -247,9 +263,9 @@ public class PowerKeeperFix extends XposedModule {
                     mUseDataWhiteList.remove(qq);
 //                    mUseDataWhiteList.remove(wechat);
 
-//                    mUseDataWhiteList.add(teams);
-//                    mUseDataWhiteList.add(telegram);
-//                    mUseDataWhiteList.add(telegramX);
+                    mUseDataWhiteList.add(teams);
+                    mUseDataWhiteList.add(telegram);
+                    mUseDataWhiteList.add(telegramX);
 
                     //remove from pkgBlackList
                     pkgBlackList.remove(gms);
@@ -264,6 +280,7 @@ public class PowerKeeperFix extends XposedModule {
     }
 
     protected void hookExtremePowerController() {
+        XposedBridge.log("[fcmfix] start to hook hookExtremePowerController!");
         /**
          * com.miui.powerkeeper.statemachine.ExtremePowerController
          * 禁用 gms
@@ -285,6 +302,7 @@ public class PowerKeeperFix extends XposedModule {
     }
 
     protected void hookNetdExecutor() {
+        XposedBridge.log("[fcmfix] start to hook hookNetdExecutor!");
         /**
          *   com.miui.powerkeeper.utils.NetdExecutor
          *   iptables 限制 gms 网络和 dns 解析
