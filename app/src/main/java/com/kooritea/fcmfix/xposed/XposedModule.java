@@ -1,21 +1,29 @@
 package com.kooritea.fcmfix.xposed;
 
 import android.app.AndroidAppHelper;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.UserManager;
 
+import androidx.core.app.NotificationCompat;
+
+import com.kooritea.fcmfix.R;
 import com.kooritea.fcmfix.util.ContentProviderHelper;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
+
+import static android.content.Context.NOTIFICATION_SERVICE;
 
 public abstract class XposedModule {
 
@@ -25,6 +33,7 @@ public abstract class XposedModule {
     protected static Context context = null;
     private static ArrayList<XposedModule> instances = new ArrayList();
     private static Boolean isInitUpdateConfigReceiver = false;
+    private static Thread loadConfigThread = null;
     public boolean isRegisterUnlockBroadcastReceive = false;
 
     protected XposedModule(final XC_LoadPackage.LoadPackageParam loadPackageParam) {
@@ -127,10 +136,20 @@ public abstract class XposedModule {
     }
 
     private static void onUpdateConfig(){
-        ContentProviderHelper contentProviderHelper = new ContentProviderHelper(context,"content://com.kooritea.fcmfix.provider/config");
-        allowList = contentProviderHelper.getStringSet("allowList");
-        if(allowList != null){
-            printLog( "onUpdateConfig allowList size: " + allowList.size());
+        if(loadConfigThread == null){
+            loadConfigThread = new Thread(){
+                @Override
+                public void run() {
+                    super.run();
+                    ContentProviderHelper contentProviderHelper = new ContentProviderHelper(context,"content://com.kooritea.fcmfix.provider/config");
+                    allowList = contentProviderHelper.getStringSet("allowList");
+                    if(allowList != null){
+                        printLog( "onUpdateConfig allowList size: " + allowList.size());
+                    }
+                    loadConfigThread = null;
+                }
+            };
+            loadConfigThread.start();
         }
     }
 
@@ -149,6 +168,40 @@ public abstract class XposedModule {
             }, intentFilter);
         }
 
+    }
+
+    protected void sendUpdateNotification(String title) {
+        sendUpdateNotification(title,null);
+    }
+
+    protected void sendUpdateNotification(String title, String content) {
+        printLog(title);
+        title = "[fcmfix]" + title;
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+        this.createFcmfixChannel(notificationManager);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "fcmfix");
+        builder.setSmallIcon(R.mipmap.ic_launcher);
+        builder.setAutoCancel(true);
+        builder.setContentTitle(title);
+        if(content != null){
+            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(content));
+        }
+        notificationManager.notify((int) System.currentTimeMillis(), builder.build());
+    }
+
+    protected void createFcmfixChannel(NotificationManager notificationManager) {
+        List<NotificationChannel> channelList = notificationManager.getNotificationChannels();
+        for (NotificationChannel item : channelList) {
+            if (item.getId() == "fcmfix") {
+                item.setName("fcmfix");
+                item.setImportance(NotificationManager.IMPORTANCE_HIGH);
+                item.setDescription("fcmfix");
+                return;
+            }
+        }
+        NotificationChannel channel = new NotificationChannel("fcmfix", "fcmfix", NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("[xposed] fcmfix更新通知");
+        notificationManager.createNotificationChannel(channel);
     }
     public void checkUserDeviceUnlock(Context context) {
         if (this.isRegisterUnlockBroadcastReceive) {

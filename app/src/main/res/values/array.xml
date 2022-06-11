@@ -3,5 +3,16 @@
     <string-array name="xposed_scope">
         <item>android</item>
         <item>com.google.android.gms</item>
+        <item>com.miui.powerkeeper</item>
+        <item>com.microsoft.teams</item>
+        <item>org.telegram.messenger</item>
+        <item>org.thunderdog.challegram</item>
+        <item>com.duosecurity.duomobile</item>
+        <item>com.azure.authenticator</item>
+        <item>com.facebook.katana</item>
+        <item>com.twitter.android</item>
+        <item>com.whatsapp</item>
+        <item>com.tencent.mm</item>
+        <item>com.skype.raider</item>
     </string-array>
 </resources>
