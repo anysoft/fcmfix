@@ -231,11 +231,13 @@ public class PowerkeeperFix extends XposedModule {
 //                    whiteApps.remove(gms);
 //                    whiteApps.remove(extService);
                     whiteApps.add(teams);
+                    whiteApps.add(telegram);
                     whiteApps.add(telegramX);
 
                     mDataWhiteList.remove(qq);
 //                    mDataWhiteList.remove(wechat);
                     mDataWhiteList.add(teams);
+                    mDataWhiteList.add(telegram);
                     mDataWhiteList.add(telegramX);
 
                     // 实例变量
