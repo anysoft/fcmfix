@@ -20,7 +20,7 @@ public class PowerkeeperFix extends XposedModule {
         this.startHook();
     }
 
-    protected void startHook(){
+    protected void startHook() {
         try {
             // hook and modify the SystemProperties of miui.os.Build
             hookSystemPropertiesToGlobal();
@@ -31,32 +31,53 @@ public class PowerkeeperFix extends XposedModule {
             hookExtremePowerController();
             hookNetdExecutor();
             printLog("[fcmfix] hook powerkeeper finished!");
-        }catch (Exception e){
+        } catch (Exception e) {
             printLog("[fcmfix] hook powerkeeper error!");
         }
     }
+
     protected void hookSystemPropertiesToGlobal() {
-        try{
-            XposedUtils.findAndHookMethodAnyParam("android.os.SystemProperties",loadPackageParam.classLoader,"get",new XC_MethodHook() {
+        try {
+            XposedUtils.findAndHookMethodAnyParam("android.os.SystemProperties", loadPackageParam.classLoader, "get", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                    String name = (String)param.args[0];
-                    if("ro.product.mod_device".equals(name)){
-                        String device = (String)XposedHelpers.callMethod(param.thisObject, "get", "ro.product.name");
-                        String modDevice = (String)param.getResult();
-                        if(!modDevice.endsWith("_global") && !"".equals(device) && device != null){
+                    String name = (String) param.args[0];
+                    if ("ro.product.mod_device".equals(name)) {
+                        String device = (String) XposedHelpers.callMethod(param.thisObject, "get", "ro.product.name");
+                        String modDevice = (String) param.getResult();
+                        if (!modDevice.endsWith("_global") && !"".equals(device) && device != null) {
                             printLog("[powerkeeper]" + device + "_global");
                             param.setResult(device + "_global");
                         }
                     }
                 }
             });
-            XposedHelpers.setStaticBooleanField(XposedHelpers.findClass("miui.os.Build",loadPackageParam.classLoader), "IS_INTERNATIONAL_BUILD", true);
-            XposedHelpers.setStaticBooleanField(XposedHelpers.findClass("miui.os.Build",loadPackageParam.classLoader), "IS_GLOBAL_BUILD", true);
-        }catch (XposedHelpers.ClassNotFoundError | NoSuchMethodError  e){
+            XposedHelpers.setStaticBooleanField(XposedHelpers.findClass("miui.os.Build", loadPackageParam.classLoader), "IS_INTERNATIONAL_BUILD", true);
+            XposedHelpers.setStaticBooleanField(XposedHelpers.findClass("miui.os.Build", loadPackageParam.classLoader), "IS_GLOBAL_BUILD", true);
+        } catch (XposedHelpers.ClassNotFoundError | NoSuchMethodError e) {
             printLog("No Such Method com.android.server.am.BroadcastQueueInjector.checkApplicationAutoStart");
         }
     }
+
+    protected void hookSimpleSettings() {
+        printLog("[fcmfix] start to hook hookSimpleSettings!");
+        Class simpleSettings = XposedHelpers.findClass("com.miui.powerkeeper.provider.SimpleSettings.Misc", this.loadPackageParam.classLoader);
+        if (null != simpleSettings) {
+            XposedHelpers.findAndHookMethod(simpleSettings, "getBoolean", new Object[]{Context.class, String.class, Boolean.TYPE, new XC_MethodHook() {
+                /* access modifiers changed from: protected */
+                public void afterHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                    Object[] args = methodHookParam.args;
+                    if (args[1].toString().equals("gms_control")){
+                        methodHookParam.setResult(true);
+                    }
+
+                }
+            }});
+        } else {
+            printLog("[fcmfix] class com.miui.powerkeeper.provider.SimpleSettings.Misc not found!");
+        }
+    }
+
     /***
      * miui 12.5 com.miui.powerkeeper
      */
@@ -67,6 +88,19 @@ public class PowerkeeperFix extends XposedModule {
          */
         // miui powerkeeper 反向优化
         Class gmsObserverClass = XposedHelpers.findClass("com.miui.powerkeeper.utils.GmsObserver", this.loadPackageParam.classLoader);
+
+        // hook 构造函数
+        XposedUtils.findAndHookConstructorAnyParam(gmsObserverClass, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                super.afterHookedMethod(param);
+                Object gmsObserver = param.thisObject;
+                // defaultState = (!Build.IS_INTERNATIONAL_BUILD); IS_INTERNATIONAL_BUILD = true
+                boolean defaultState = XposedHelpers.getBooleanField(gmsObserver, "defaultState");
+                printLog("[fcmfix] GmsObserver defaultState:" + defaultState);
+                XposedHelpers.setBooleanField(gmsObserver, "defaultState", false);
+            }
+        });
 
         // hook 禁止更新 updateGmsState
         XposedHelpers.findAndHookMethod(gmsObserverClass, "updateGmsState", new Object[]{Boolean.TYPE, new XC_MethodReplacement() {
@@ -92,16 +126,21 @@ public class PowerkeeperFix extends XposedModule {
                 return null;
             }
         }});
-//        XposedHelpers.findAndHookMethod(gmsObserverClass, "isGmsAppInstalled", new Object[]{new XC_MethodReplacement() {
-//            protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-//                return true;
-//            }
-//        }});
-//        XposedHelpers.findAndHookMethod(gmsObserverClass, "isGmsCoreAppEnabled", new Object[]{new XC_MethodReplacement() {
-//            protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-//                return true;
-//            }
-//        }});
+        XposedHelpers.findAndHookMethod(gmsObserverClass, "isGmsAppInstalled", new Object[]{new XC_MethodReplacement() {
+            protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                return true;
+            }
+        }});
+        XposedHelpers.findAndHookMethod(gmsObserverClass, "isGmsCoreAppEnabled", new Object[]{new XC_MethodReplacement() {
+            protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                return true;
+            }
+        }});
+/*        XposedHelpers.findAndHookMethod(gmsObserverClass, "initGmsControl", new Object[]{new XC_MethodReplacement() {
+            protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                return null;
+            }
+        }});*/
     }
 
     protected void hookGmsCoreUtils() {
@@ -139,7 +178,7 @@ public class PowerkeeperFix extends XposedModule {
         final String gms = "com.google.android.gms";
         final String extService = "com.google.android.ext.services";
         final String teams = "com.microsoft.teams";   // microsoft teams
-        final  String telegram = "org.telegram.messenger";     // telegram
+        final String telegram = "org.telegram.messenger";     // telegram
         final String telegramX = "org.thunderdog.challegram";     // telegram x
         final String qq = "com.tencent.mobileqq";     // qq
         final String wechat = "com.tencent.mm";     // wechat
@@ -211,7 +250,7 @@ public class PowerkeeperFix extends XposedModule {
                         "fm.xiami.main"));
 
         Class milletPolicyClass = XposedHelpers.findClass("com.miui.powerkeeper.millet.MilletPolicy", this.loadPackageParam.classLoader);
-        if (null != milletPolicyClass){
+        if (null != milletPolicyClass) {
 
             /**
              * 强行修改 static 全局静态变量
@@ -227,9 +266,9 @@ public class PowerkeeperFix extends XposedModule {
                     super.afterHookedMethod(param);
                     Object milletPolicy = param.thisObject;
                     // static 静态列表修改
-                    List<String> mSystemBlackList = (List<String>) XposedHelpers.getStaticObjectField(milletPolicy.getClass(),"mSystemBlackList");
-                    List<String> mDataWhiteList = (List<String>) XposedHelpers.getStaticObjectField(milletPolicy.getClass(),"mDataWhiteList");
-                    List<String> whiteApps = (List<String>) XposedHelpers.getStaticObjectField(milletPolicy.getClass(),"whiteApps");
+                    List<String> mSystemBlackList = (List<String>) XposedHelpers.getStaticObjectField(milletPolicy.getClass(), "mSystemBlackList");
+                    List<String> mDataWhiteList = (List<String>) XposedHelpers.getStaticObjectField(milletPolicy.getClass(), "mDataWhiteList");
+                    List<String> whiteApps = (List<String>) XposedHelpers.getStaticObjectField(milletPolicy.getClass(), "whiteApps");
                     //遵循国际版标准
                     mSystemBlackList.remove(gms);
 //                    whiteApps.remove(gms);
