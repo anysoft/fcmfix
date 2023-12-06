@@ -1,8 +1,9 @@
 name: Android CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "miui" ]
 
 jobs:
   build:
@@ -28,7 +29,7 @@ jobs:
 
     - name: Set version name
       run: sed -i "s/versionName \".*\"/versionName \"${{ env.VERSION_NAME }}\"/" ${{ github.workspace }}/app/build.gradle
-      
+
     - name: Build with Gradle
       run: ./gradlew assembleRelease
 
@@ -52,7 +53,7 @@ jobs:
 
     - name: Renamae
       run: mv ${{ github.workspace }}/app/build/outputs/apk/release/app-release-unsigned-signed.apk ${{ github.workspace }}/app/build/outputs/apk/release/fcmfix-ci-${{ env.VERSION_NAME }}.apk
-    
+
     - name: Upload built apk
       uses: actions/upload-artifact@v3
       with:
@@ -67,7 +68,7 @@ jobs:
         token: "${{ secrets.TOKEN }}"
         files: |
           ${{ github.workspace }}/app/build/outputs/apk/release/fcmfix-ci-${{ env.VERSION_NAME }}.apk
-    
+
     - uses: dorny/paths-filter@v3
       id: changes
       with:
@@ -76,7 +77,8 @@ jobs:
             - 'app/build.gradle'
 
     - name: Release lsposed module repository
-      if: steps.changes.outputs.src == 'true'
+#      if: steps.changes.outputs.src == 'true'
+      if: false
       uses: softprops/action-gh-release@v2
       with:
         name: "Auto Release ${{ env.VERSION_NAME }}"
