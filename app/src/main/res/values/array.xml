@@ -2,7 +2,63 @@
 <resources>
     <string-array name="xposed_scope">
         <item>android</item>
-        <!-- <item>com.miui.powerkeeper</item> -->
-        <!-- <item>com.google.android.gms</item> -->
+        <item>com.google.android.gms</item>
+        <item>com.miui.powerkeeper</item>
+        <item>com.android.vending</item>
+        <item>com.google.android.calendar</item>
+        <item>com.google.android.apps.photos</item>
+        <item>com.google.android.apps.googleassistant</item>
+        <item>com.google.android.apps.mapslite</item>
+        <!--    chat    -->
+        <item>com.tencent.mm</item>
+        <item>com.microsoft.teams</item>
+        <item>org.telegram.messenger</item>
+        <item>org.thunderdog.challegram</item>
+        <item>com.facebook.katana</item>
+        <item>com.facebook.lite</item>
+        <item>com.twitter.android</item>
+        <item>com.discord</item>
+        <item>com.whatsapp</item>
+        <item>com.whatsapp.w4b</item>
+        <item>com.skype.raider</item>
+        <item>com.instagram.android</item>
+        <!--    auth mfa/2fa    -->
+        <item>com.duosecurity.duomobile</item>
+        <item>com.azure.authenticator</item>
+        <item>com.onepassword.android</item>
+        <item>com.authy.authy</item>
+        <item>com.x8bit.bitwarden</item>
+        <!--    blockchain    -->
+        <item>com.feixiaohao</item>
+        <item>im.token.app</item>
+        <item>io.metamask</item>
+        <item>com.binance.dev</item>
+        <item>com.coinbase.android</item>
+        <item>com.okinc.okex.gp</item>
+        <item>pro.huobi</item>
+        <item>com.kubi.kucoin</item>
+        <item>com.gateio.gateio</item>
+        <item>com.mexcpro.client</item>
+        <item>com.pro.hot</item>
+        <!--    email    -->
+        <item>com.google.android.gm</item>
+        <item>com.alibaba.cloudmail</item>
+        <item>com.microsoft.office.outlook</item>
+        <!--    other    -->
+        <item>fr.smarquis.fcm</item>
+        <item>com.github.android</item>
+        <item>com.microsoft.emmx</item>
+        <item>com.kiwibrowser.browser</item>
+        <item>com.microsoft.office.officehubrow</item>
+        <item>com.server.auditor.ssh.client</item>
+        <item>com.cloudflare.onedotonedotonedotone</item>
+        <!--   disk     -->
+        <item>com.dropbox.android</item>
+        <!--   media     -->
+        <item>com.zhiliaoapp.musically</item>
+        <item>com.google.android.youtube</item>
+        <item>com.google.android.apps.youtube.music</item>
+        <item>com.netflix.mediaclient</item>
+        <item>com.larksuite.suite</item>
     </string-array>
 </resources>
